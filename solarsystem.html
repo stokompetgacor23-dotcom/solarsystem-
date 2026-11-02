@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8"><title>Solar System Explorer 3D</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#050a18;--gl:rgba(12,22,48,.72);--ln:rgba(120,170,255,.22);--tx:#dce8ff;--ac:#5ab0ff;--mu:#8aa0c8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--tx);font:13px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+*{box-sizing:border-box}canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+.g{background:var(--gl);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--ln);border-radius:12px}
+#top{position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 6px);height:44px;display:flex;align-items:center;gap:10px;padding:0 12px;z-index:5}
+#top b{letter-spacing:.14em;font-size:12px;white-space:nowrap}#top b span{color:var(--ac)}
+#sw{position:relative;flex:1;max-width:340px;margin-left:auto}
+#q{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--ln);color:var(--tx);border-radius:8px;padding:6px 10px;font-size:13px}
+#res{position:absolute;top:36px;left:0;right:0;max-height:240px;overflow:auto;display:none;padding:4px;z-index:9}
+#res div{padding:6px 8px;border-radius:6px;cursor:pointer}#res div:hover{background:rgba(90,176,255,.2)}
+#fps{color:var(--mu);font-size:11px;white-space:nowrap}
+#side{position:fixed;left:8px;top:calc(env(safe-area-inset-top,0px) + 58px);bottom:8px;width:64px;display:flex;flex-direction:column;gap:4px;padding:6px;z-index:5}
+#side button{background:none;border:0;color:var(--mu);padding:8px 2px;border-radius:8px;font-size:10px;cursor:pointer}
+#side button.on,#side button:hover{background:rgba(90,176,255,.18);color:#fff}
+#side i{display:block;font-style:normal;font-size:18px}
+#ctl{position:fixed;left:80px;right:8px;bottom:8px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;z-index:4}
+button.b{background:rgba(90,176,255,.14);border:1px solid var(--ln);color:var(--tx);border-radius:8px;padding:6px 9px;font-size:12px;cursor:pointer}
+button.b:hover,button.b.on{background:rgba(90,176,255,.38)}
+#ctl label{color:var(--mu);font-size:11px;display:flex;align-items:center;gap:4px}
+#info{position:fixed;right:8px;top:calc(env(safe-area-inset-top,0px) + 58px);width:310px;max-height:calc(100% - 160px);overflow:auto;padding:14px;display:none;z-index:6}
+#info h2{margin:0 0 6px;font-size:20px}#info canvas{float:right;border-radius:50%;margin:0 0 6px 8px}
+#info table{width:100%;border-collapse:collapse;font-size:12px;clear:both}#info td{padding:3px 0;border-bottom:1px solid var(--ln);vertical-align:top}#info td:first-child{color:var(--mu);width:42%}
+.pg{position:fixed;left:80px;right:8px;top:calc(env(safe-area-inset-top,0px) + 58px);bottom:8px;padding:16px;overflow:auto;display:none;z-index:7;background:rgba(5,10,24,.92)}
+.pg h2{margin:0 0 10px}.pg h3{margin:14px 0 4px;color:var(--ac)}.pg a{color:var(--ac)}
+.chip{display:inline-block;margin:2px;padding:4px 9px;border:1px solid var(--ln);border-radius:20px;cursor:pointer;color:var(--mu)}.chip.on{background:rgba(90,176,255,.35);color:#fff}
+table.t{border-collapse:collapse;width:100%}table.t td,table.t th{border-bottom:1px solid var(--ln);padding:6px;text-align:left;vertical-align:top}
+.bar{height:6px;background:var(--ac);border-radius:3px;margin-top:3px}
+.lb{position:fixed;font-size:10px;color:#cfe3ff;pointer-events:none;transform:translate(-50%,-130%);text-shadow:0 0 4px #000;white-space:nowrap;z-index:3}
+.opt{display:block;width:100%;text-align:left;margin:5px 0;padding:9px;background:rgba(90,176,255,.1);border:1px solid var(--ln);color:var(--tx);border-radius:8px;cursor:pointer;font-size:13px}
+.ok{background:rgba(60,200,120,.35)!important}.no{background:rgba(230,70,70,.35)!important}
+#load{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:99;letter-spacing:.2em;font-size:12px;color:var(--ac)}
+#err{position:fixed;left:80px;top:60px;background:#600;padding:6px 10px;border-radius:8px;display:none;z-index:98}
+@media(max-width:720px){#side{top:auto;left:8px;right:8px;bottom:8px;width:auto;height:52px;flex-direction:row;justify-content:space-around}#side i{font-size:16px}
+#ctl{left:8px;right:8px;bottom:68px}.pg{left:8px;bottom:68px}#info{left:8px;right:8px;width:auto;top:auto;bottom:150px;max-height:40vh}#top b{display:none}#fps{display:none}}
+:root{--bg:#070b14;--ln:rgba(255,255,255,.09);--tx:#e6ebf5;--ac:#e9b872;--mu:#8793ab}
+html,body{font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif}
+.g{background:rgba(10,15,27,.94);backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:10px}
+.ic{width:17px;height:17px;flex:none}
+#top b{font-weight:600;letter-spacing:.16em}
+#fps,#date,#spl,#info td:last-child,.pg td{font-family:'IBM Plex Mono',ui-monospace,monospace}
+#q{background:#060a13;border-radius:8px}
+#res div:hover{background:rgba(255,255,255,.07)}
+#side button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 2px;font-size:10px;letter-spacing:.02em}
+#side button.on{background:rgba(233,184,114,.1);color:var(--ac)}
+#side button:hover{background:rgba(255,255,255,.05);color:#fff}
+button.b{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--ln);color:var(--tx);border-radius:8px;padding:7px 10px;font-size:12px;font-weight:500}
+button.b.i{padding:7px}
+button.b:hover{background:rgba(255,255,255,.06)}
+button.b.on{border-color:rgba(233,184,114,.55);color:var(--ac);background:rgba(233,184,114,.08)}
+#ctl{align-items:center;gap:6px}#ctl .sp{display:flex;align-items:center;gap:8px;color:var(--mu);font-size:11px}#ctl .row{display:contents}#mo{display:none}.pg.g{background:#0a0f1b}
+input[type=range]{accent-color:var(--ac)}
+.chip.on{background:rgba(233,184,114,.14);border-color:rgba(233,184,114,.5);color:var(--ac)}
+.opt{background:transparent}.opt:hover{background:rgba(255,255,255,.05)}
+#info{padding:14px;position:fixed}#info h2{font-size:18px;font-weight:600;margin:2px 0 0}
+#info canvas{float:left;margin:0 10px 6px 0;border:1px solid var(--ln)}
+#info p{margin:8px 0}#info .x{position:absolute;right:8px;top:8px;width:30px;height:30px;padding:0;border:0;background:transparent;color:var(--mu);border-radius:8px;display:flex;align-items:center;justify-content:center}
+#info .x:hover{background:rgba(255,255,255,.08);color:#fff}
+#info>div:last-child{position:sticky;bottom:-14px;background:rgb(10,15,27);padding:10px 0 4px;margin-top:8px;border-top:1px solid var(--ln)}
+.ft span{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ac);margin-bottom:2px}
+@media(max-width:720px){
+#top{height:42px;padding:0 6px}#sw{max-width:none;margin:0}
+#side{left:8px;right:8px;bottom:8px;height:54px;padding:4px;gap:0}#side button{flex:1;padding:4px 0}
+#ctl{left:8px;right:8px;bottom:70px;padding:6px;flex-wrap:wrap}#ctl .sp{flex:1;min-width:0}#ctl .sp input{flex:1;min-width:40px}#ctl .sp #spl{display:none}
+#mo{display:inline-flex}#ctl .row{display:none;width:100%;flex-wrap:wrap;gap:6px;padding-top:6px;border-top:1px solid var(--ln)}#ctl.open .row{display:flex}
+.pg{left:8px;right:8px;bottom:70px;padding:14px}
+#info{left:8px;right:8px;width:auto;top:auto;bottom:128px;max-height:36vh;padding:12px}
+#info>div:last-child{flex-wrap:nowrap!important;overflow-x:auto;bottom:-12px}#info>div:last-child .b{white-space:nowrap}
+}
+</style><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></head><body>
+<div id="load">MEMUAT TATA SURYA…</div><div id="err"></div>
+<canvas id="c"></canvas><div id="labels"></div>
+<div id="top" class="g"><b>SOLAR SYSTEM <span>EXPLORER 3D</span></b><span id="fps"></span>
+<div id="sw"><input id="q" placeholder="Cari objek: Earth, Titan, Halley…" autocomplete="off"><div id="res" class="g"></div></div></div>
+<div id="side" class="g"></div>
+<div id="ctl" class="g">
+<button class="b" id="play">⏸ Pause</button><button class="b" id="reset">↺ Reset</button>
+<label>Kecepatan <input type="range" id="spd" min="0" max="100" value="55"><span id="spl"></span></label>
+<span id="date" style="color:var(--mu);font-size:11px"></span>
+<button class="b on" id="torb">Orbit</button><button class="b on" id="tlab">Label</button><button class="b on" id="tbelt">Asteroid</button><button class="b on" id="tstar">Bintang</button><button class="b" id="tperf">Mode Performa</button>
+<button class="b" id="zin">＋</button><button class="b" id="zout">－</button><button class="b" id="home">☀ Tata Surya</button><button class="b" id="fs">⛶</button></div>
+<div id="info" class="g"></div>
+<div id="pg-compare" class="pg g"></div><div id="pg-learn" class="pg g"></div><div id="pg-missions" class="pg g"></div><div id="pg-quiz" class="pg g"></div><div id="pg-refs" class="pg g"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+const $=s=>document.querySelector(s),TAU=Math.PI*2;
+const IC={play:'<path d="M7 4l13 8-13 8z"/>',pause:'<path d="M7 4v16M17 4v16"/>',reset:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',orbit:'<circle cx="12" cy="12" r="2.5"/><ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(-25 12 12)"/>',tag:'<path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1"/>',dots:'<circle cx="6" cy="8" r="1.6"/><circle cx="13" cy="6" r="1.2"/><circle cx="18" cy="12" r="1.8"/><circle cx="9" cy="15" r="1.4"/><circle cx="15" cy="18" r="1.1"/>',spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',zap:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',full:'<path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/>',globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',bars:'<path d="M6 20V10M12 20V4M18 20v-7"/>',book:'<path d="M4 4h6a3 3 0 0 1 2 1 3 3 0 0 1 2-1h6v15h-6a3 3 0 0 0-2 1 3 3 0 0 0-2-1H4z"/><path d="M12 5v15"/>',rocket:'<path d="M12 2c3 2 5 6 5 10l-2 3H9l-2-3c0-4 2-8 5-10z"/><circle cx="12" cy="10" r="1.5"/><path d="M9 15l-2 4 3-1M15 15l2 4-3-1"/>',help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/>',link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',close:'<path d="M6 6l12 12M18 6L6 18"/>',sliders:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>'};
+const ICN={explorer:'globe',compare:'bars',learn:'book',missions:'rocket',quiz:'help',refs:'link'};
+const svg=n=>`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[n]}</svg>`;
+$('#ctl').innerHTML=`<button class="b i" id="play" data-ic="pause" aria-label="Putar/jeda"></button><button class="b i" id="reset" data-ic="reset" aria-label="Reset simulasi"></button><div class="sp"><span id="date"></span><input type="range" id="spd" min="0" max="100" value="55" aria-label="Kecepatan"><span id="spl"></span></div><button class="b i" id="mo" data-ic="sliders" aria-label="Opsi tampilan"></button><div class="row"><button class="b on" id="torb" data-ic="orbit">Orbit</button><button class="b on" id="tlab" data-ic="tag">Label</button><button class="b on" id="tbelt" data-ic="dots">Asteroid</button><button class="b on" id="tstar" data-ic="spark">Bintang</button><button class="b" id="tperf" data-ic="zap">Performa</button><button class="b i" id="zin" data-ic="plus" aria-label="Zoom in"></button><button class="b i" id="zout" data-ic="minus" aria-label="Zoom out"></button><button class="b" id="home" data-ic="sun">Tata Surya</button><button class="b i" id="fs" data-ic="full" aria-label="Layar penuh"></button></div>`;
+document.querySelectorAll('[data-ic]').forEach(e=>e.insertAdjacentHTML('afterbegin',svg(e.dataset.ic)));
+$('#mo').onclick=()=>$('#ctl').classList.toggle('open');
+function vo(on){const H=innerHeight,W=innerWidth;if(on&&W<=720)camera.setViewOffset(W,H,0,H*.17,W,H);else camera.clearViewOffset();camera.updateProjectionMatrix()}
+function closeInfo(){$('#info').style.display='none';hiM.visible=false;hi=null;vo(false)}
+onerror=(m)=>{const e=$('#err');e.style.display='block';e.textContent='Error: '+m};
+/* ===== DATA ILMIAH (NASA Planetary Fact Sheet, nssdc.gsfc.nasa.gov) — dipisah dari data visual (c1,c2,k) ===== */
+const P=[
+{id:'mercury',n:'Mercury',a:.387,T:87.97,rot:1407.6,tilt:.03,d:4879,m:.330,g:3.7,t:'−173 s/d 427 °C (rata-rata 167 °C)',mo:0,atm:'Eksosfer sangat tipis (O₂, Na, H₂, He, K)',surf:'Kawah tumbukan, dataran lava, tebing (scarp) raksasa',c1:'#8c8c8c',c2:'#4d4d4d',k:'rock',desc:'Planet terkecil dan terdekat dengan Matahari. Tanpa atmosfer berarti, suhunya ekstrem antara siang dan malam.',fact:'Satu hari matahari (siang ke siang) di Merkurius berlangsung sekitar 176 hari Bumi.',miss:'Mariner 10 (1974–75), MESSENGER (2011–15), BepiColombo (ESA/JAXA, dalam perjalanan).'},
+{id:'venus',n:'Venus',a:.723,T:224.7,rot:-5832.5,tilt:177.4,d:12104,m:4.87,g:8.9,t:'rata-rata 464 °C',mo:0,atm:'CO₂ ±96,5%, N₂ ±3,5%, awan asam sulfat',surf:'Dataran vulkanik, dataran tinggi (Ishtar & Aphrodite Terra), ribuan gunung api',c1:'#e3b66b',c2:'#b97b2e',k:'band',atmc:'#ffcf80',desc:'Planet terpanas karena efek rumah kaca ekstrem. Berotasi retrograde (berlawanan arah) sangat lambat.',fact:'Satu hari sidereal Venus (±243 hari Bumi) lebih panjang daripada satu tahunnya (±225 hari).',miss:'Magellan (radar, 1990–94), Venus Express (ESA), Akatsuki (JAXA).'},
+{id:'earth',n:'Earth',a:1,T:365.25,rot:23.93,tilt:23.4,d:12756,m:5.97,g:9.8,t:'rata-rata 15 °C',mo:1,atm:'N₂ 78%, O₂ 21%, Ar 0,9%',surf:'±71% lautan, benua, lapisan es kutub',c1:'#1c4f9c',c2:'#3f8a3c',k:'earth',atmc:'#4da6ff',desc:'Satu-satunya tempat yang diketahui mengandung kehidupan. Memiliki air cair, atmosfer kaya oksigen, dan medan magnet global.',fact:'Bumi adalah planet terpadat di tata surya (±5,51 g/cm³).',miss:'Dipantau satelit Landsat, Terra/Aqua (NASA), Copernicus Sentinel (ESA), dan ISS.'},
+{id:'mars',n:'Mars',a:1.524,T:687,rot:24.62,tilt:25.2,d:6792,m:.642,g:3.7,t:'rata-rata −65 °C',mo:2,atm:'CO₂ 95%, N₂ 2,8%, Ar 2%',surf:'Gurun besi oksida, Olympus Mons, Valles Marineris, tudung es kutub',c1:'#b5532f',c2:'#6d2a14',k:'rock',atmc:'#ff9a66',desc:'Planet merah dengan jejak sungai dan danau purba. Target utama pencarian kehidupan masa lalu.',fact:'Olympus Mons ±22 km tingginya, gunung api terbesar yang diketahui di tata surya.',miss:'Curiosity (2012), Perseverance & Ingenuity (2021), InSight, MAVEN, Tianwen-1.'},
+{id:'jupiter',n:'Jupiter',a:5.204,T:4333,rot:9.93,tilt:3.1,d:142984,m:1898,g:24.8,t:'±−110 °C (puncak awan)',mo:95,atm:'H₂ ±90%, He ±10%',surf:'Tidak ada permukaan padat; pita awan & badai (Great Red Spot)',c1:'#d8b48a',c2:'#8b5a3c',k:'band',desc:'Raksasa gas terbesar; massanya lebih dari dua kali gabungan semua planet lain.',fact:'Great Red Spot adalah badai raksasa yang sudah diamati selama lebih dari 150 tahun.',miss:'Pioneer, Voyager, Galileo, Juno, Europa Clipper & JUICE (menuju sistem Jupiter).'},
+{id:'saturn',n:'Saturn',a:9.58,T:10759,rot:10.7,tilt:26.7,d:120536,m:568,g:10.4,t:'±−140 °C (puncak awan)',mo:274,atm:'H₂ ±96%, He ±3%',surf:'Tidak ada permukaan padat; pita awan, badai heksagon di kutub utara',c1:'#e6cf9a',c2:'#b08f5c',k:'band',desc:'Terkenal dengan sistem cincin es yang paling mencolok. Kepadatannya lebih kecil dari air.',fact:'Cincinnya lebar ±280.000 km, namun tebalnya umumnya hanya puluhan meter.',miss:'Pioneer 11, Voyager 1 & 2, Cassini–Huygens (2004–2017).'},
+{id:'uranus',n:'Uranus',a:19.2,T:30687,rot:-17.2,tilt:97.8,d:51118,m:86.8,g:8.9,t:'±−195 °C',mo:28,atm:'H₂ 83%, He 15%, CH₄ 2%',surf:'Raksasa es; mantel air–amonia–metana di bawah atmosfer',c1:'#9fe3e6',c2:'#6fbac2',k:'band',atmc:'#9fe3e6',desc:'Raksasa es yang berputar "berbaring" pada sisinya dengan sumbu miring 97,8°. Cincinnya tipis dan gelap.',fact:'Hanya satu pesawat yang pernah mengunjunginya: Voyager 2 (1986).',miss:'Voyager 2 (1986). Misi orbiter masih dalam tahap studi/usulan.'},
+{id:'neptune',n:'Neptune',a:30.07,T:60190,rot:16.1,tilt:28.3,d:49528,m:102,g:11.1,t:'±−200 °C',mo:16,atm:'H₂ 80%, He 19%, CH₄ 1,5%',surf:'Raksasa es; badai gelap & awan metana beku',c1:'#3f66e0',c2:'#1f2f94',k:'band',atmc:'#4a78ff',desc:'Planet terjauh dengan angin tercepat di tata surya (>2.000 km/jam).',fact:'Ditemukan lewat perhitungan matematis (1846) sebelum teramati langsung.',miss:'Voyager 2 (1989).'},
+{id:'pluto',n:'Pluto',type:'dwarf',a:39.5,T:90560,rot:153.3,tilt:122.5,d:2377,m:.0130,g:.62,t:'±−230 °C',mo:5,atm:'N₂, CH₄, CO (sangat tipis)',surf:'Dataran es nitrogen (Sputnik Planitia), pegunungan es air',c1:'#b99a80',c2:'#6e5645',k:'rock',desc:'Planet katai di Sabuk Kuiper dengan orbit elips dan miring.',fact:'Hati putih besar di permukaannya adalah Sputnik Planitia.',miss:'New Horizons (flyby 2015).'},
+{id:'ceres',n:'Ceres',type:'dwarf',a:2.77,T:1682,rot:9.07,tilt:4,d:939,m:.00094,g:.28,t:'±−105 °C',mo:0,atm:'Hampir tidak ada',surf:'Kawah, bintik garam terang (Occator)',c1:'#888',c2:'#555',k:'rock',desc:'Objek terbesar di Sabuk Asteroid dan satu-satunya planet katai di tata surya bagian dalam.',fact:'Mengandung lebih dari sepertiga massa seluruh Sabuk Asteroid.',miss:'Dawn (2015–2018).'},
+{id:'haumea',n:'Haumea',type:'dwarf',a:43.1,T:103400,rot:3.9,tilt:0,d:1560,m:.0040,g:.4,t:'±−241 °C',mo:2,atm:'Tidak ada',surf:'Es air kristalin; bentuk lonjong (elipsoid) akibat rotasi cepat',c1:'#e0e0e0',c2:'#a8a8b0',k:'rock',desc:'Planet katai berbentuk lonjong dan memiliki cincin.',fact:'Berotasi dalam sekitar 3,9 jam.',miss:'Belum ada misi.'},
+{id:'makemake',n:'Makemake',type:'dwarf',a:45.8,T:111000,rot:22.8,tilt:0,d:1430,m:.0031,g:.5,t:'±−239 °C',mo:1,atm:'Kemungkinan metana tipis',surf:'Es metana, etana, dan nitrogen; kemerahan',c1:'#c49a7a',c2:'#8a5d45',k:'rock',desc:'Salah satu objek paling terang di Sabuk Kuiper.',fact:'Ditemukan tahun 2005.',miss:'Belum ada misi.'},
+{id:'eris',n:'Eris',type:'dwarf',a:67.8,T:203830,rot:25.9,tilt:78,d:2326,m:.0166,g:.82,t:'±−231 °C',mo:1,atm:'Es nitrogen musiman',surf:'Permukaan es sangat reflektif',c1:'#e8e8e8',c2:'#b0b0c0',k:'rock',desc:'Planet katai paling masif; penemuannya (2005) memicu redefinisi "planet" oleh IAU tahun 2006.',fact:'Orbitnya sangat jauh dan miring, periode ±558 tahun.',miss:'Belum ada misi.'},
+{id:'moon',n:'Moon',type:'moon',par:'earth',dist:384400,T:27.32,d:3474,g:1.62,t:'−173 s/d 127 °C',desc:'Satu-satunya satelit alami Bumi; terkunci pasang surut.',fact:'Manusia mendarat 6 kali (Apollo 11–17).',miss:'Apollo, Chandrayaan-3, Artemis (program).',c1:'#aaa',c2:'#555',k:'rock'},
+{id:'phobos',n:'Phobos',type:'moon',par:'mars',dist:9376,T:.319,d:22,g:.0057,desc:'Bulan Mars yang tidak beraturan; mengorbit sangat dekat.',fact:'Mengorbit Mars 3 kali sehari.',c1:'#7a6d62',c2:'#4a4038',k:'rock'},
+{id:'deimos',n:'Deimos',type:'moon',par:'mars',dist:23460,T:1.263,d:12,g:.003,desc:'Bulan Mars yang lebih kecil dan jauh.',fact:'Berukuran ±12 km.',c1:'#8a7d70',c2:'#554a40',k:'rock'},
+{id:'io',n:'Io',type:'moon',par:'jupiter',dist:421700,T:1.769,d:3643,g:1.8,desc:'Benda paling aktif secara vulkanik di tata surya.',fact:'Memiliki ratusan gunung api aktif.',c1:'#e6d34a',c2:'#c46a1c',k:'rock'},
+{id:'europa',n:'Europa',type:'moon',par:'jupiter',dist:671000,T:3.551,d:3122,g:1.31,desc:'Kerak es dengan samudra air asin di bawahnya.',fact:'Target pencarian kehidupan oleh Europa Clipper.',c1:'#d9cfc0',c2:'#a0603c',k:'rock'},
+{id:'ganymede',n:'Ganymede',type:'moon',par:'jupiter',dist:1070400,T:7.155,d:5268,g:1.43,desc:'Satelit terbesar di tata surya, lebih besar dari Merkurius.',fact:'Satu-satunya bulan dengan medan magnet sendiri.',c1:'#8d8478',c2:'#5c5650',k:'rock'},
+{id:'callisto',n:'Callisto',type:'moon',par:'jupiter',dist:1882700,T:16.69,d:4821,g:1.24,desc:'Permukaan paling banyak berkawah di tata surya.',fact:'Sangat tua dan hampir tidak berubah.',c1:'#5e564e',c2:'#3a3430',k:'rock'},
+{id:'titan',n:'Titan',type:'moon',par:'saturn',dist:1221870,T:15.95,d:5150,g:1.35,t:'±−179 °C',atm:'N₂ ±95%, CH₄ ±5%',desc:'Satu-satunya bulan dengan atmosfer tebal; memiliki danau metana cair.',fact:'Huygens mendarat di Titan pada 2005.',miss:'Cassini–Huygens; Dragonfly (NASA, direncanakan).',c1:'#d9a441',c2:'#a8731c',k:'rock',atmc:'#ffb84d'},
+{id:'enceladus',n:'Enceladus',type:'moon',par:'saturn',dist:238040,T:1.37,d:504,g:.113,desc:'Menyemburkan pancaran uap air dari samudra bawah es.',fact:'Semburannya memberi material pada cincin E Saturnus.',c1:'#f5f8ff',c2:'#cfd8e6',k:'rock'},
+{id:'triton',n:'Triton',type:'moon',par:'neptune',dist:354760,T:-5.877,d:2707,g:.78,t:'±−235 °C',desc:'Bulan terbesar Neptunus dengan orbit retrograde.',fact:'Kemungkinan objek Sabuk Kuiper yang tertangkap.',c1:'#d8c8c0',c2:'#a08f88',k:'rock'},
+{id:'halley',n:'Halley Comet',type:'comet',a:17.8,T:27503,rot:52,d:11,desc:'Komet periodik paling terkenal, kembali sekitar tiap 75–76 tahun. Orbit digambar secara ilustratif (skala terkompresi).',fact:'Perihelion terakhir 1986; berikutnya diperkirakan 2061.',miss:'Giotto (ESA), Vega 1 & 2, Suisei, Sakigake (1986).',c1:'#ccc',c2:'#999',k:'rock'}];
+const SUN={id:'sun',n:'Sun',type:'sun',d:1392700,m:1988500,g:274,t:'5.500 °C (permukaan), ±1,5 juta °C (korona)',rot:609.1,tilt:7.25,mo:8,atm:'H ±73%, He ±25%',surf:'Fotosfer, bintik Matahari, flare (tekstur ilustratif)',desc:'Bintang tipe-G di pusat tata surya; mengandung 99,86% massa tata surya.',fact:'Cahayanya butuh ±8,3 menit sampai ke Bumi.',miss:'Parker Solar Probe, SOHO, Solar Orbiter, SDO.',c1:'#ff8a1a',c2:'#ffe08a',k:'sun'};
+/* ===== VISUAL ===== */
+const RAD=d=>Math.max(.08,.5*Math.sqrt(d/12756)),OR=a=>14+9*Math.sqrt(a);
+function mk(c1,c2,k,seed){const c=document.createElement('canvas');c.width=512;c.height=256;const g=c.getContext('2d');let s=seed*977+11;const r=()=>(s=s*16807%2147483647)/2147483647;g.fillStyle=c1;g.fillRect(0,0,512,256);
+if(k==='band'){for(let y=0;y<256;){const h=4+r()*18;g.globalAlpha=.25+r()*.5;g.fillStyle=r()>.5?c2:c1;g.fillRect(0,y,512,h);y+=h}}
+else{const n=k==='earth'?90:k==='sun'?260:420;for(let i=0;i<n;i++){const rad=k==='earth'?8+r()*30:2+r()*(k==='sun'?14:9);g.globalAlpha=k==='earth'?.9:.1+r()*.3;g.fillStyle=c2;g.beginPath();g.ellipse(r()*512,r()*256,rad,rad*(k==='earth'?.7:1),0,0,TAU);g.fill()}
+if(k==='earth'){g.globalAlpha=1;g.fillStyle='#fff';g.fillRect(0,0,512,14);g.fillRect(0,242,512,14)}}
+g.globalAlpha=1;return c}
+function ringTex(col){const c=document.createElement('canvas');c.width=256;c.height=4;const g=c.getContext('2d');for(let x=0;x<256;x++){g.fillStyle=col;g.globalAlpha=Math.random()*.7*(x>20&&x<230?1:.2);g.fillRect(x,0,1,4)}return new THREE.CanvasTexture(c)}
+function ring(i,o,col,op){const g=new THREE.RingGeometry(i,o,96),p=g.attributes.position,uv=g.attributes.uv,v=new THREE.Vector3();for(let k=0;k<p.count;k++){v.fromBufferAttribute(p,k);uv.setXY(k,(v.length()-i)/(o-i),.5)}
+const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:ringTex(col),transparent:true,opacity:op,side:2,depthWrite:false}));m.rotation.x=-Math.PI/2;return m}
+const atmM=c=>new THREE.ShaderMaterial({uniforms:{c:{value:new THREE.Color(c)}},vertexShader:'varying vec3 n;void main(){n=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'uniform vec3 c;varying vec3 n;void main(){float i=pow(max(.0,.72-dot(n,vec3(0,0,1))),3.);gl_FragColor=vec4(c,1.)*i*1.6;}',blending:THREE.AdditiveBlending,side:THREE.BackSide,transparent:true,depthWrite:false});
+let renderer,scene,camera,controls,t=0,playing=true,perf=false,focus=null,follow=false,last=new THREE.Vector3(),tw=null;
+const bodies=[],meshes=[],orbits=new THREE.Group(),lab=$('#labels');
+try{renderer=new THREE.WebGLRenderer({canvas:$('#c'),antialias:true})}catch(e){onerror('WebGL tidak tersedia di perangkat ini')}
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+scene=new THREE.Scene();scene.background=new THREE.Color(0x02040c);
+camera=new THREE.PerspectiveCamera(50,1,.05,3000);camera.position.set(0,70,130).multiplyScalar(innerWidth<720?2.2:1);
+controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.minDistance=.3;controls.maxDistance=600;
+const amb=new THREE.AmbientLight(0x202838,1.2);scene.add(amb,orbits);
+const sunL=new THREE.PointLight(0xfff2dd,1.7,0,0);scene.add(sunL);
+function add(o,parent,idx){const r=o.type==='sun'?8:RAD(o.d),h=new THREE.Group(),tg=new THREE.Group();
+const cv=mk(o.c1,o.c2,o.k,o.id.length*7+idx);
+if(o.id==='jupiter'){const g=cv.getContext('2d');g.fillStyle='#b5482e';g.globalAlpha=.9;g.beginPath();g.ellipse(340,170,22,12,0,0,TAU);g.fill()}
+const tx=new THREE.CanvasTexture(cv),seg=r>.6?48:24;
+const mat=o.type==='sun'?new THREE.MeshBasicMaterial({map:tx}):new THREE.MeshStandardMaterial({map:tx,roughness:.95,bumpMap:o.k==='band'?null:tx,bumpScale:.04});
+const mesh=new THREE.Mesh(new THREE.SphereGeometry(r,seg,seg*.66|0),mat);mesh.userData.b=o;tg.add(mesh);meshes.push(mesh);
+if(o.atmc){const a=new THREE.Mesh(new THREE.SphereGeometry(r*1.09,32,24),atmM(o.atmc));tg.add(a)}
+let cl=null;if(o.id==='earth'){const c=mk('rgba(0,0,0,0)','#fff','rock',9),g=c.getContext('2d');g.clearRect(0,0,512,256);for(let i=0;i<160;i++){g.globalAlpha=.25+Math.random()*.4;g.fillStyle='#fff';g.beginPath();g.ellipse(Math.random()*512,Math.random()*256,6+Math.random()*26,3+Math.random()*7,0,0,TAU);g.fill()}
+cl=new THREE.Mesh(new THREE.SphereGeometry(r*1.015,32,24),new THREE.MeshStandardMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));tg.add(cl)}
+if(o.id==='saturn')tg.add(ring(r*1.25,r*2.3,'#d8c394',.85));if(o.id==='uranus')tg.add(ring(r*1.6,r*2,'#9fb6b8',.35));
+tg.rotation.z=(o.tilt||0)*Math.PI/180;h.add(tg);
+const b={o,h,mesh,cl,r,ang:0,ph:idx*2.399%TAU,par:parent};
+if(parent){const sib=bodies.filter(x=>x.par===parent).length;b.mr=parent.r*2.6+sib*.8;parent.h.add(h)}else scene.add(h);
+if(!parent&&o.a&&o.type!=='comet'){const R=OR(o.a),pts=[];for(let i=0;i<=128;i++)pts.push(new THREE.Vector3(Math.cos(i/128*TAU)*R,0,Math.sin(i/128*TAU)*R));orbits.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:o.type==='dwarf'?0x664466:0x3a5a88,transparent:true,opacity:.6})))}
+const l=document.createElement('div');l.className='lb';l.textContent=o.n;lab.appendChild(l);b.l=l;bodies.push(b);return b}
+const sunB=add(SUN,null,0);sunB.h.add(sunL);
+const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:(()=>{const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d'),gr=g.createRadialGradient(64,64,10,64,64,64);gr.addColorStop(0,'rgba(255,200,100,.9)');gr.addColorStop(.4,'rgba(255,140,40,.3)');gr.addColorStop(1,'rgba(255,100,0,0)');g.fillStyle=gr;g.fillRect(0,0,128,128);return new THREE.CanvasTexture(c)})(),blending:THREE.AdditiveBlending,depthWrite:false}));spr.scale.set(36,36,1);sunB.h.add(spr);
+P.forEach((o,i)=>{if(o.type!=='moon'&&o.type!=='comet')add(o,null,i+1)});
+P.forEach((o,i)=>{if(o.type==='moon')add(o,bodies.find(x=>x.o.id===o.par),i+1)});
+/* Komet Halley (orbit ilustratif) */
+const hl=add(P.find(x=>x.id==='halley'),null,40);hl.ell={a:60,e:.8};{const a=60,e=.8,b2=a*Math.sqrt(1-e*e),pts=[];for(let i=0;i<=160;i++){const E=i/160*TAU;pts.push(new THREE.Vector3(a*(Math.cos(E)-e),0,b2*Math.sin(E)))}
+const L=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x4488aa,transparent:true,opacity:.4}));L.rotation.x=.35;orbits.add(L);hl.tilt=.35;
+hl.tail=new THREE.Mesh(new THREE.ConeGeometry(.2,5,10),new THREE.MeshBasicMaterial({color:0x99ddff,transparent:true,opacity:.35,blending:THREE.AdditiveBlending,depthWrite:false}));hl.h.add(hl.tail)}
+/* Sabuk Asteroid (InstancedMesh), Kuiper, Oort (konseptual), bintang */
+const belt=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(.08,0),new THREE.MeshStandardMaterial({color:0x8a8478,roughness:1}),1500),dm=new THREE.Object3D();
+for(let i=0;i<1500;i++){const a=Math.random()*TAU,R=OR(2.2)+Math.random()*(OR(3.2)-OR(2.2));dm.position.set(Math.cos(a)*R,(Math.random()-.5)*1.2,Math.sin(a)*R);dm.scale.setScalar(.4+Math.random()*1.6);dm.rotation.set(Math.random()*3,Math.random()*3,0);dm.updateMatrix();belt.setMatrixAt(i,dm.matrix)}scene.add(belt);
+function pts(n,f,sz,col,op){const p=new Float32Array(n*3);for(let i=0;i<n;i++){const v=f();p.set(v,i*3)}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(p,3));return new THREE.Points(g,new THREE.PointsMaterial({size:sz,color:col,transparent:true,opacity:op,sizeAttenuation:sz<1,depthWrite:false}))}
+const kuiper=pts(2500,()=>{const a=Math.random()*TAU,R=OR(32)+Math.random()*14;return[Math.cos(a)*R,(Math.random()-.5)*5,Math.sin(a)*R]},.22,0x8899bb,.6);
+const oort=pts(2000,()=>{const u=Math.random()*TAU,v=Math.acos(2*Math.random()-1);return[160*Math.sin(v)*Math.cos(u),160*Math.sin(v)*Math.sin(u),160*Math.cos(v)]},1.2,0x6677aa,.35);
+const stars=pts(3500,()=>{const u=Math.random()*TAU,v=Math.acos(2*Math.random()-1),R=800;return[R*Math.sin(v)*Math.cos(u),R*Math.sin(v)*Math.sin(u),R*Math.cos(v)]},1.3,0xffffff,.9);scene.add(kuiper,oort,stars);
+/* ===== SIMULASI ===== */
+const spd=()=>Math.pow(10,$('#spd').value/25-1.5),fmtT=d=>Math.abs(d)>=700?(Math.abs(d)/365.25).toFixed(1)+' tahun':Math.abs(d).toFixed(2)+' hari';
+function updSpd(){$('#spl').textContent=spd().toFixed(2)+' hari/dtk'}$('#spd').oninput=updSpd;updSpd();
+const wp=b=>b.h.getWorldPosition(new THREE.Vector3());
+function place(){for(const b of bodies){const o=b.o;if(b.par){const a=TAU*t/o.T+b.ph;b.h.position.set(Math.cos(a)*b.mr,0,Math.sin(a)*b.mr)}
+else if(o.type==='comet'){const M=TAU*t/o.T+.5;let E=M;for(let i=0;i<6;i++)E=M+hl.ell.e*Math.sin(E);const A=hl.ell.a,e=hl.ell.e,x=A*(Math.cos(E)-e),z=A*Math.sqrt(1-e*e)*Math.sin(E),c=Math.cos(hl.tilt),s=Math.sin(hl.tilt);b.h.position.set(x,-z*s,z*c);const dir=b.h.position.clone().normalize();b.tail.position.copy(dir.clone().multiplyScalar(2.5));b.tail.quaternion.setFromUnitVectors(new THREE.Vector3(0,-1,0),dir)}
+else if(o.a){const a=TAU*t/o.T+b.ph,R=OR(o.a);b.h.position.set(Math.cos(a)*R,0,Math.sin(a)*R)}}}
+function fmtDate(){const d=new Date(Date.UTC(2026,10,2)+t*864e5);return isNaN(d)?'—':d.toISOString().slice(0,10)}
+let fr=0,ft=performance.now(),pr=renderer.getPixelRatio(),prev=performance.now();
+function anim(now){requestAnimationFrame(anim);const dt=Math.min((now-prev)/1e3,.1);prev=now;
+if(playing){const dd=dt*spd();t+=dd;const rd=Math.min(dd,dt*.5);for(const b of bodies){const o=b.o,rt=b.par?o.T*24:o.rot;if(rt)b.mesh.rotation.y+=TAU*rd*24/rt;if(b.cl)b.cl.rotation.y+=dt*.02}belt.rotation.y+=dt*.005*Math.min(spd(),20)/8}
+place();
+if(hi&&hiM.visible){hiM.position.copy(wp(hi));hiM.scale.setScalar(hi.r*1.18)}if(follow){const p=wp(follow);camera.position.add(p.clone().sub(last));controls.target.copy(p);last.copy(p)}
+controls.update();renderer.render(scene,camera);
+const W=innerWidth,H=innerHeight;if($('#tlab').classList.contains('on'))for(const b of bodies){const v=wp(b).project(camera),show=v.z<1&&Math.abs(v.x)<1&&Math.abs(v.y)<1&&(!b.par||(focus&&(focus===b||focus===b.par)));b.l.style.display=show?'block':'none';if(show){b.l.style.left=(v.x+1)/2*W+'px';b.l.style.top=(1-v.y)/2*H+'px'}}else for(const b of bodies)b.l.style.display='none';
+$('#date').textContent=fmtDate();
+fr++;if(now-ft>500){const f=fr*1000/(now-ft);$('#fps').textContent=f.toFixed(0)+' FPS · PR '+pr.toFixed(2);if(f<28&&pr>1){pr=Math.max(1,pr-.25);renderer.setPixelRatio(pr)}fr=0;ft=now}}
+function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()}addEventListener('resize',()=>{resize();vo($('#info').style.display==='block')});resize();
+/* ===== KAMERA & FOKUS ===== */
+function goto(b){if(tw)tw.kill();follow=null;focus=b;const p=wp(b),t0=controls.target.clone(),o0=camera.position.clone().sub(t0),dist=(b.r*(b.o.type==='sun'?5.5:4.5)+1.5)*Math.max(1,.85/camera.aspect),o1=o0.clone().normalize().multiplyScalar(dist),k={s:0};
+tw=gsap.to(k,{s:1,duration:1.6,ease:'power2.inOut',onUpdate(){const pp=wp(b);controls.target.lerpVectors(t0,pp,k.s);camera.position.copy(controls.target).add(o0.clone().lerp(o1,k.s))},onComplete(){follow=b;last.copy(wp(b))}})}
+function overview(){if(tw)tw.kill();follow=null;focus=null;const t0=controls.target.clone(),c0=camera.position.clone(),k={s:0};tw=gsap.to(k,{s:1,duration:1.6,ease:'power2.inOut',onUpdate(){controls.target.lerpVectors(t0,new THREE.Vector3(),k.s);camera.position.lerpVectors(c0,new THREE.Vector3(0,70,130).multiplyScalar(innerWidth<720?2.2:1),k.s)}});closeInfo()}
+let hi=null;const hiM=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),new THREE.MeshBasicMaterial({color:0xe9b872,wireframe:true,transparent:true,opacity:.3}));scene.add(hiM);hiM.visible=false;
+function select(b){goto(b);showInfo(b);hi=b;hiM.visible=true;showPage('explorer')}
+const rc=new THREE.Raycaster(),m2=new THREE.Vector2();let dn=null;const cv=renderer.domElement;
+cv.addEventListener('pointerdown',e=>dn=[e.clientX,e.clientY]);
+cv.addEventListener('pointerup',e=>{if(!dn||Math.hypot(e.clientX-dn[0],e.clientY-dn[1])>5)return;m2.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);rc.setFromCamera(m2,camera);const h=rc.intersectObjects(meshes)[0];if(h){const b=bodies.find(x=>x.mesh===h.object);select(b)}});
+/* ===== PANEL INFO ===== */
+const nf=x=>x.toLocaleString('id-ID');
+function showInfo(b,det){const o=b.o,el=$('#info');el.style.display='block';vo(true);const rows=[];
+const R=(k,v)=>v!==undefined&&rows.push(`<tr><td>${k}</td><td>${v}</td></tr>`);
+R('Diameter',nf(o.d)+' km');R('Massa',o.m!==undefined?(o.m>=1?nf(o.m):o.m)+' ×10²⁴ kg':undefined);R('Gravitasi',o.g!==undefined?o.g+' m/s²':undefined);
+if(o.type==='moon')R('Jarak',nf(o.dist)+' km dari '+b.par.o.n);else if(o.a)R('Jarak dari Matahari',o.a+' AU (±'+nf(Math.round(o.a*149.6))+' juta km)'+(o.type==='comet'?' (setengah sumbu panjang)':''));
+R('Suhu',o.t);R('Rotasi',o.type==='moon'?'terkunci pasang surut':o.rot?(Math.abs(o.rot)>48?(Math.abs(o.rot)/24).toFixed(1)+' hari':Math.abs(o.rot).toFixed(2)+' jam')+(o.rot<0?' (retrograde)':''):undefined);
+R('Revolusi',o.T?fmtT(o.T)+(o.T<0?' (retrograde)':''):undefined);R('Kemiringan sumbu',o.tilt!==undefined?o.tilt+'°':undefined);R('Satelit alami',o.type==='moon'||o.type==='comet'||o.type==='sun'?undefined:o.mo+(o.mo>30?' (terkonfirmasi, per data NASA)':''));R('Atmosfer',o.atm);R('Permukaan',o.surf);
+el.innerHTML=`<button class="x" id="ix" aria-label="Tutup">${svg('close')}</button><canvas id="th" width="56" height="56"></canvas><h2>${o.n}</h2><div style="color:var(--mu);font-size:11px">${{sun:'Bintang',dwarf:'Planet katai',moon:'Satelit alami',comet:'Komet'}[o.type]||'Planet'} · render ilustratif</div><p>${o.desc}</p><table>${rows.join('')}</table><p class="ft"><span>Fakta</span>${o.fact}</p>${det&&o.miss?`<p class="ft"><span>Misi</span>${o.miss}</p>`:''}
+<div style="display:flex;flex-wrap:wrap;gap:5px"><button class="b" id="ie">Explore Planet</button><button class="b" id="id">View Details</button><button class="b" id="ic">Compare Planet</button><button class="b" id="if">Focus Camera</button><button class="b" id="ib">Back to Solar System</button></div>`;
+const g=$('#th').getContext('2d');g.beginPath();g.arc(28,28,28,0,TAU);g.clip();g.drawImage(b.mesh.material.map.image,0,0,56,56);
+$('#ie').onclick=()=>{goto(b);setTimeout(()=>{camera.position.sub(controls.target).multiplyScalar(.6).add(controls.target)},1700)};$('#id').onclick=()=>showInfo(b,!det);$('#if').onclick=()=>goto(b);$('#ib').onclick=overview;$('#ix').onclick=closeInfo;
+$('#ic').onclick=()=>{if(['planet',undefined].includes(o.type)||o.type==='dwarf'){cmp.add(o.id);showPage('compare')}else alert('Perbandingan tersedia untuk planet & planet katai.')}}
+/* ===== PENCARIAN ===== */
+$('#q').oninput=e=>{const v=e.target.value.trim().toLowerCase(),r=$('#res');if(!v){r.style.display='none';return}const m=bodies.filter(b=>b.o.n.toLowerCase().includes(v)||(v.includes('halley')&&b.o.id==='halley')).slice(0,8);r.innerHTML=m.map(b=>`<div data-i="${b.o.id}">${b.o.n} <small style="color:var(--mu)">${b.o.type||'planet'}</small></div>`).join('')||'<div>Tidak ditemukan</div>';r.style.display='block';r.querySelectorAll('[data-i]').forEach(d=>d.onclick=()=>{select(bodies.find(b=>b.o.id===d.dataset.i));r.style.display='none';$('#q').value=''})};
+$('#q').onkeydown=e=>{if(e.key==='Enter'){const f=$('#res [data-i]');f&&f.click()}};
+/* ===== KONTROL ===== */
+$('#play').onclick=()=>{playing=!playing;$('#play').innerHTML=svg(playing?'pause':'play')};
+$('#reset').onclick=()=>{t=0;overview()};$('#home').onclick=overview;
+const tg=(id,fn)=>$(id).onclick=e=>{const t=e.currentTarget;t.classList.toggle('on');fn(t.classList.contains('on'))};
+tg('#torb',v=>orbits.visible=v);tg('#tlab',()=>{});tg('#tbelt',v=>{belt.visible=v;kuiper.visible=v});tg('#tstar',v=>{stars.visible=v;oort.visible=v});
+tg('#tperf',v=>{perf=v;pr=v?1:Math.min(devicePixelRatio,2);renderer.setPixelRatio(pr);kuiper.visible=oort.visible=!v;amb.intensity=v?1.6:1.2;const c=bodies.find(b=>b.cl);c.cl.visible=!v});$('#tperf').classList.remove('on');
+$('#zin').onclick=()=>camera.position.sub(controls.target).multiplyScalar(.75).add(controls.target);$('#zout').onclick=()=>camera.position.sub(controls.target).multiplyScalar(1.33).add(controls.target);
+$('#fs').onclick=()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();
+/* ===== HALAMAN ===== */
+const pages=[['explorer','🔭','Jelajah'],['compare','⚖','Banding'],['learn','📚','Belajar'],['missions','🚀','Misi'],['quiz','❓','Kuis'],['refs','🔗','Sumber']];
+$('#side').innerHTML=pages.map(p=>`<button data-p="${p[0]}">${svg(ICN[p[0]])}<span>${p[2]}</span></button>`).join('');
+function showPage(p){document.querySelectorAll('.pg').forEach(x=>x.style.display='none');document.querySelectorAll('#side button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));if(p!=='explorer'){$('#pg-'+p).style.display='block';closeInfo();if(p==='compare')rCmp();if(p==='quiz')qStart()}}
+document.querySelectorAll('#side button').forEach(b=>b.onclick=()=>showPage(b.dataset.p));showPage('explorer');
+let cR,cS,cC,cM=[],cTex={};
+const lw=o=>o.id==='saturn'?o.d*2.3:o.id==='uranus'?o.d*2:o.d;
+function cmp3d(sel){const wrap=$('#cw');if(!wrap)return;
+if(!cR){cR=new THREE.WebGLRenderer({antialias:true,alpha:true});cS=new THREE.Scene();cS.add(new THREE.AmbientLight(0x8890a8,.9));const dl=new THREE.DirectionalLight(0xffffff,1.6);dl.position.set(-3,2,4);cS.add(dl);cC=new THREE.OrthographicCamera(-1,1,1,-1,.1,700000);cC.position.z=300000;
+(function loop(){requestAnimationFrame(loop);if($('#pg-compare').style.display!=='block')return;cM.forEach(g=>g.userData.m.rotation.y+=.004);cR.render(cS,cC)})()}
+cM.forEach(m=>cS.remove(m));cM=[];
+const H=210,n=sel.length,tot=sel.reduce((s,x)=>s+lw(x),0),G=tot*.1/(n+1),full=tot+G*(n+1),mx=Math.max(...sel.map(x=>x.d)),w=Math.max(wrap.clientWidth,n*90);
+let hw=full/2,hh=hw*H/w;if(hh<mx*.7){hh=mx*.7;hw=hh*w/H}
+cC.left=-hw;cC.right=hw;cC.top=hh;cC.bottom=-hh;cC.updateProjectionMatrix();cR.setPixelRatio(Math.min(devicePixelRatio,2));cR.setSize(w,H);wrap.appendChild(cR.domElement);
+let x=-full/2+G;
+sel.forEach(o=>{const b=bodies.find(q=>q.o.id===o.id),tx=cTex[o.id]||(cTex[o.id]=new THREE.CanvasTexture(b.mesh.material.map.image)),g=new THREE.Group(),tl=new THREE.Group(),r=o.d/2,m=new THREE.Mesh(new THREE.SphereGeometry(r,48,32),new THREE.MeshStandardMaterial({map:tx,roughness:.95}));
+tl.rotation.z=(o.tilt||0)*Math.PI/180;tl.add(m);if(o.id==='saturn')tl.add(ring(r*1.25,r*2.3,'#d8c394',.85));if(o.id==='uranus')tl.add(ring(r*1.6,r*2,'#9fb6b8',.4));
+g.rotation.x=.4;g.add(tl);g.userData.m=m;g.position.x=x+lw(o)/2;x+=lw(o)+G;cS.add(g);cM.push(g)})}
+const cmp=new Set(['earth','mars','jupiter']),CP=P.filter(x=>!x.type||x.type==='dwarf');
+function rCmp(){const sel=CP.filter(x=>cmp.has(x.id)),M=[['Diameter (km)',x=>x.d],['Massa (×10²⁴ kg)',x=>x.m],['Gravitasi (m/s²)',x=>x.g],['Jarak dari Matahari (AU)',x=>x.a],['Lama satu hari (jam)',x=>Math.abs(x.rot)],['Lama satu tahun (hari Bumi)',x=>x.T],['Jumlah satelit',x=>x.mo]],mxd=Math.max(...sel.map(x=>x.d),1);
+$('#pg-compare').innerHTML=`<h2>Perbandingan Planet</h2><div>${CP.map(x=>`<span class="chip ${cmp.has(x.id)?'on':''}" data-c="${x.id}">${x.n}</span>`).join('')}</div>
+<h3>Model 3D (skala linear, sama untuk semua)</h3><div id="cw" style="overflow-x:auto;background:#060a13;border:1px solid var(--ln);border-radius:8px;line-height:0"></div><div style="color:var(--mu);font-size:11px;margin-top:4px">Urutan: ${sel.map(x=>x.n).join(' · ')}. Geser ke samping jika banyak. Tekstur ilustratif.</div>
+${M.map(([n,f])=>{const mx=Math.max(...sel.map(f),1e-9);return`<h3>${n}</h3>${sel.map(x=>`<div style="font-size:12px">${x.n}: <b>${nf(f(x))}</b><div class="bar" style="width:${Math.max(1,f(x)/mx*100)}%"></div></div>`).join('')}`}).join('')}
+<p style="color:var(--mu)">Suhu: ${sel.map(x=>x.n+' — '+x.t).join(' · ')}</p>`;
+document.querySelectorAll('[data-c]').forEach(c=>c.onclick=()=>{cmp.has(c.dataset.c)?cmp.size>1&&cmp.delete(c.dataset.c):cmp.add(c.dataset.c);rCmp()});cmp3d(sel)}
+const L=[['Mengenal Tata Surya','Tata surya terdiri dari Matahari, 8 planet, planet katai, satelit alami, asteroid, komet, dan material antarplanet. Terbentuk ±4,6 miliar tahun lalu dari awan gas dan debu yang runtuh oleh gravitasi.'],['Sejarah Pembentukan','Awan molekul runtuh membentuk Matahari dan piringan protoplanet. Debu menggumpal menjadi planetesimal, lalu planet. Di dalam garis es terbentuk planet berbatu; di luar terbentuk raksasa gas dan es.'],['Matahari','Bintang kerdil kuning (tipe G2V). Menghasilkan energi lewat fusi hidrogen menjadi helium di inti. Siklus aktivitasnya ±11 tahun.'],['Planet Terestrial','Merkurius, Venus, Bumi, Mars: kecil, berbatu, berinti logam, padat.'],['Gas Raksasa & Es Raksasa','Jupiter dan Saturnus didominasi hidrogen–helium. Uranus dan Neptunus lebih kaya "es" (air, amonia, metana) di mantelnya.'],['Planet Katai','Memenuhi kriteria IAU 2006: mengorbit Matahari, bulat, tetapi belum membersihkan lintasan orbitnya. Contoh: Pluto, Ceres, Eris, Haumea, Makemake.'],['Satelit, Asteroid & Komet','Satelit alami mengorbit planet. Asteroid sebagian besar ada di sabuk antara Mars–Jupiter. Komet berasal dari Sabuk Kuiper dan awan Oort; menumbuhkan ekor saat mendekati Matahari.'],['Gerhana','Gerhana Matahari terjadi saat Bulan berada di antara Matahari dan Bumi; gerhana Bulan saat Bumi berada di antara Matahari dan Bulan. Terjadi hanya bila ketiganya hampir segaris.'],['Orbit & Gravitasi','Hukum Kepler: orbit berbentuk elips, garis planet–Matahari menyapu luas sama dalam waktu sama, dan T² ∝ a³. Newton: F = G·m₁·m₂/r².'],['Eksplorasi','Dari Sputnik (1957) hingga Voyager, Cassini, Juno, dan rover Mars, eksplorasi mengungkap dunia-dunia yang dulu hanya titik cahaya.'],['Glosarium','AU: jarak rata-rata Bumi–Matahari (±149,6 juta km). Retrograde: berputar/mengorbit berlawanan arah umum. Perihelion: titik terdekat ke Matahari. Aksial tilt: kemiringan sumbu rotasi.']];
+$('#pg-learn').innerHTML='<h2>Pusat Pembelajaran</h2>'+L.map(l=>`<h3>${l[0]}</h3><p>${l[1]}</p>`).join('')+'<p style="color:var(--mu)">Ilustrasi & diagram: gunakan viewport 3D (Explorer) dan halaman Banding.</p>';
+const MS=[['Voyager 1','NASA',1977,'Tur planet luar → ruang antarbintang','Pertama memasuki ruang antarbintang (2012)'],['Voyager 2','NASA',1977,'Tur Jupiter–Saturnus–Uranus–Neptunus','Satu-satunya yang mengunjungi Uranus & Neptunus'],['Cassini–Huygens','NASA/ESA/ASI',1997,'Orbit Saturnus & pendaratan di Titan','Samudra Enceladus; danau metana Titan (berakhir 2017)'],['Juno','NASA',2011,'Struktur dalam & medan Jupiter','Pemetaan medan gravitasi & magnet Jupiter'],['New Horizons','NASA',2006,'Pluto & Sabuk Kuiper','Flyby Pluto 2015; Arrokoth 2019'],['Mars Curiosity','NASA',2011,'Kelayakhunian Gale Crater','Bukti lingkungan purba berair'],['Mars Perseverance','NASA',2020,'Mencari biosignature & menyimpan sampel','Mengumpulkan sampel batuan Mars'],['Parker Solar Probe','NASA',2018,'Menyentuh korona Matahari','Terbang paling dekat dengan Matahari'],['Artemis','NASA + mitra',2022,'Kembali ke Bulan','Artemis I (2022) tanpa awak; misi lanjutan terus berkembang']];
+$('#pg-missions').innerHTML=`<h2>Database Misi</h2><p style="color:var(--mu)">Status misi bisa berubah: verifikasi pada <a href="https://science.nasa.gov/missions/" target="_blank" rel="noopener">science.nasa.gov/missions</a> sebelum presentasi.</p><div style="overflow:auto"><table class="t"><tr><th>Misi</th><th>Badan</th><th>Luncur</th><th>Tujuan</th><th>Temuan</th></tr>${MS.map(m=>`<tr><td><b>${m[0]}</b></td><td>${m[1]}</td><td>${m[2]}</td><td>${m[3]}</td><td>${m[4]}</td></tr>`).join('')}</table></div>`;
+$('#pg-refs').innerHTML=`<h2>Referensi & Catatan Ilmiah</h2><ul><li><a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/" target="_blank" rel="noopener">NASA Planetary Fact Sheet (NSSDCA)</a> — data fisik planet</li><li><a href="https://science.nasa.gov/solar-system/" target="_blank" rel="noopener">NASA Solar System Exploration</a></li><li><a href="https://ssd.jpl.nasa.gov/" target="_blank" rel="noopener">NASA/JPL Solar System Dynamics</a> — orbit & satelit</li><li><a href="https://www.esa.int/Science_Exploration" target="_blank" rel="noopener">ESA Science & Exploration</a></li></ul>
+<h3>Penting: skala & tekstur</h3><p><b>Skala terkompresi:</b> radius benda ∝ √diameter dan jarak orbit ∝ √AU supaya seluruh tata surya terlihat. Ini <b>bukan skala sebenarnya</b>. Periode orbit & rotasi memakai data nyata.</p><p><b>Tekstur:</b> halaman yang dipublikasikan tidak dapat memuat gambar dari situs luar, sehingga tekstur NASA tidak bisa dipakai di sini. Permukaan, awan, cincin, dan Great Red Spot dibuat <b>secara prosedural dan bersifat ilustratif</b> — bukan citra ilmiah. Sistem tekstur dipisah (fungsi <code>mk()</code>) sehingga mudah diganti dengan peta NASA saat dijalankan di server sendiri. Orbit planet katai, komet Halley, Sabuk Kuiper, dan awan Oort digambar ilustratif; jumlah satelit mengikuti data NASA yang terkonfirmasi.</p>`;
+/* ===== KUIS ===== */
+const Q=[['Planet terbesar di tata surya?',['Saturnus','Jupiter','Neptunus','Bumi'],1,'Jupiter berdiameter ±142.984 km.','Mudah'],['Planet terdekat dari Matahari?',['Merkurius','Venus','Mars','Bumi'],0,'Merkurius ±0,39 AU.','Mudah'],['Planet yang harinya lebih panjang dari tahunnya?',['Merkurius','Mars','Venus','Uranus'],2,'Rotasi Venus ±243 hari, revolusi ±225 hari.','Sedang'],['Satelit alami terbesar di tata surya?',['Titan','Ganymede','Bulan','Callisto'],1,'Ganymede ±5.268 km.','Sedang'],['Bulan Saturnus yang beratmosfer tebal?',['Enceladus','Rhea','Titan','Mimas'],2,'Titan memiliki atmosfer N₂ tebal.','Mudah'],['Berapa jumlah planet menurut IAU?',['7','8','9','10'],1,'Delapan, sejak Pluto menjadi planet katai (2006).','Mudah'],['Planet dengan kemiringan sumbu ±97,8°?',['Neptunus','Saturnus','Uranus','Mars'],2,'Uranus berputar "berbaring".','Sedang'],['Pesawat yang melintasi Pluto pada 2015?',['Voyager 2','New Horizons','Cassini','Juno'],1,'New Horizons, NASA.','Sedang'],['Bulan Jupiter yang sangat aktif secara vulkanik?',['Europa','Io','Callisto','Ganymede'],1,'Io punya ratusan gunung api aktif.','Sedang'],['Sabuk asteroid utama berada di antara…',['Bumi–Mars','Mars–Jupiter','Jupiter–Saturnus','Saturnus–Uranus'],1,'Antara Mars dan Jupiter (±2,2–3,2 AU).','Mudah'],['Great Red Spot terdapat di planet…',['Mars','Saturnus','Jupiter','Neptunus'],2,'Badai raksasa Jupiter.','Mudah'],['Planet terpanas permukaannya?',['Merkurius','Venus','Mars','Bumi'],1,'Venus ±464 °C karena efek rumah kaca.','Sulit'],['1 AU kira-kira…',['15 juta km','149,6 juta km','1,5 miliar km','384.400 km'],1,'Jarak rata-rata Bumi–Matahari.','Sulit'],['Pesawat pertama yang memasuki ruang antarbintang?',['Voyager 1','Pioneer 10','Cassini','New Horizons'],0,'Voyager 1 (2012).','Sulit'],['Tahun IAU menetapkan definisi planet & planet katai?',['1996','2001','2006','2012'],2,'Majelis Umum IAU Praha 2006.','Sulit']];
+let qs=[],qi=0,sc=0,lv='Semua',rec=[];
+function qStart(){const pool=lv==='Semua'?Q:Q.filter(q=>q[4]===lv);qs=[...pool].sort(()=>Math.random()-.5);qi=0;sc=0;rec=[];qShow()}
+function qShow(){const el=$('#pg-quiz'),f=`<h2>Kuis Astronomi</h2><div>Tingkat: ${['Semua','Mudah','Sedang','Sulit'].map(l=>`<span class="chip ${l===lv?'on':''}" data-l="${l}">${l}</span>`).join('')}</div>`;
+if(qi>=qs.length){el.innerHTML=f+`<h3>Skor akhir: ${sc} / ${qs.length}</h3>${rec.map(r=>`<p>${r[0]?'<b style="color:#6fcf97">Benar</b>':'<b style="color:#eb6b6b">Salah</b>'} · ${r[1]}</p>`).join('')}<button class="b" id="qr">Ulangi</button>`;$('#qr').onclick=qStart}
+else{const q=qs[qi];el.innerHTML=f+`<p style="color:var(--mu)">Soal ${qi+1}/${qs.length} · ${q[4]} · Skor ${sc}</p><h3 style="color:var(--tx)">${q[0]}</h3>${q[1].map((o,i)=>`<button class="opt" data-o="${i}">${o}</button>`).join('')}<div id="ex"></div>`;
+el.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const i=+b.dataset.o;el.querySelectorAll('.opt').forEach((x,j)=>{x.disabled=true;if(j===q[2])x.classList.add('ok')});if(i!==q[2])b.classList.add('no');else sc++;rec.push([i===q[2],q[0]]);$('#ex').innerHTML=`<p>${q[3]}</p><button class="b" id="nx">${qi+1<qs.length?'Berikutnya':'Lihat hasil'}</button>`;$('#nx').onclick=()=>{qi++;qShow()}})}
+el.querySelectorAll('[data-l]').forEach(c=>c.onclick=()=>{lv=c.dataset.l;qStart()})}
+place();gsap.to('#load',{opacity:0,duration:.8,onComplete:()=>$('#load').remove()});requestAnimationFrame(anim);
+</script></body></html>
